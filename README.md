@@ -17,5 +17,5 @@ python face_parts_detection.py -i "이미지 경로" -part '포인트번호,포�
 ex. python face_parts_detection.py -i "images/aabqcugcpc 01_0_0.jpg" -pts '69,17,36,37,38,39,21,71,70'  
 
 영역이 여러개일 경우  
-python face_parts_detection.py -i "이미지 경로" -part '포인트번호,포인트번호/포인트번호,포인트번호'
+python face_parts_detection.py -i "이미지 경로" -part '포인트번호,포인트번호/포인트번호,포인트번호'  
 ex. python face_parts_detection.py -i "images/aabqcugcpc 01_0_0.jpg" -pts '69,17,36,37,38,39,21,71,70/75,29,76,33'  
