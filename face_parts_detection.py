@@ -43,7 +43,9 @@ for i, img_name in enumerate(test_dataset):
 	#image = imutils.resize(image, width=800)
 
 	h, w, c = image.shape
+
 	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
 
 	# show the original input image and detect faces in the grayscale image
 	# cv2.imshow("Input", image)
@@ -56,12 +58,15 @@ for i, img_name in enumerate(test_dataset):
 		shape = predictor(gray, rect)
 
 		# 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
+
 		left = rect.left()
 		top = rect.top()
+
 		if left<0 :
 			left = 0
 		elif top<0 :
 			top = 0
+
 
 
 		shape = face_utils.shape_to_np(shape)
@@ -220,6 +225,11 @@ for i, img_name in enumerate(test_dataset):
 		x_112 = x_88
 		y_112 = y_88 - brow_d
 
+		#이마 끝
+		x_113 = int(w / 2)
+		y_113 = int(h * 0.08)
+
+
 
 		# ---------------------------------------------------------------------------------------
 		# 추가 점 배열에 담기
@@ -231,7 +241,8 @@ for i, img_name in enumerate(test_dataset):
 										(95, (x_95, y_95)) , (96, (x_96, y_96)) , (97, (x_97, y_97)), (98, (x_98, y_98)) , (99, (x_99, y_99)),
 										 (100, (x_100, y_100)), (101, (x_101, y_101)), (102, (x_102, y_102)), (103, (x_103, y_103)),
 										(104, (x_104, y_104)), (105, (x_105, y_105)), (106, (x_106, y_106)), (107, (x_107, y_107)),
-										(108, (x_108, y_108)), (109, (x_109, y_109)), (110, (x_110, y_110)), (111, (x_111, y_111)) , (112, (x_112, y_112))
+										(108, (x_108, y_108)), (109, (x_109, y_109)), (110, (x_110, y_110)), (111, (x_111, y_111)) , (112, (x_112, y_112)),
+										(113, (x_113, y_113))
 										])
 
 		# ---------------------------------------------------------------------------------------
@@ -345,43 +356,44 @@ for i, img_name in enumerate(test_dataset):
 					# 선택한 영역만 자르기
 
 					# 선택한 영역 크롭하기
-					rect = cv2.boundingRect(pts)
-					x, y, w, h = rect
-					# 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
-					if x < 0:
-						x = 0
-					elif y < 0:
-						y = 0
-					croped = face_part_pts_crop[y:y + h, x:x + w].copy()
+					# rect = cv2.boundingRect(pts)
+					# x, y, w, h = rect
+					# # 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
+					# if x < 0:
+					# 	x = 0
+					# elif y < 0:
+					# 	y = 0
+					# croped = face_part_pts_crop[y:y + h, x:x + w].copy()
 
 					# 마스크로 영역 지정
-					pts = pts - pts.min(axis=0)
-					mask = np.zeros(croped.shape[:2], np.uint8)
+				#	pts = pts - pts.min(axis=0)
+					mask = np.zeros(face_part_pts_img.shape[:2], np.uint8)
 					cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
 					# 검은색 배경으로 자르기
-					black_background = cv2.bitwise_and(croped, croped, mask=mask)
+					black_background = cv2.bitwise_and(face_part_pts_img, face_part_pts_img, mask=mask)
 
 					# 흰색 배경으로 자르기
-					bg = np.ones_like(croped, np.uint8) * 255
+					bg = np.ones_like(face_part_pts_img, np.uint8) * 255
 					cv2.bitwise_not(bg, bg, mask=mask)
 					white_backgroud = bg + black_background
 
+					#이미지 저장
 					output_dir = args["image"] + 'output/'
 					if not os.path.exists(output_dir):
 						os.mkdir(output_dir)
 					cv2.imwrite(output_dir + 'p_' + img_name, face_part_pts_img)
-					cv2.imwrite(output_dir + 'c_' + img_name, croped)
+					cv2.imwrite(output_dir + 'i_' + img_name, face_part_pts_crop)
 					cv2.imwrite(output_dir + 'b_' + img_name, black_background)
 
 
-					#cv2.imshow('face_part_crop', face_part_pts_img)
-					#cv2.imshow("crop", croped)
-					#cv2.imshow("mask", mask)
-					#cv2.imshow("black_background", black_background)
-					#cv2.imshow("white_backgroud", white_backgroud)
-					#cv2.waitKey(0)
-				    #cv2.destroyAllWindows()
+					# cv2.imshow('face_part_crop', face_part_pts_img)
+					# cv2.imshow("crop", croped)
+					# cv2.imshow("mask", mask)
+					# cv2.imshow("black_background", black_background)
+					# cv2.imshow("white_backgroud", white_backgroud)
+					# cv2.waitKey(0)
+				    # cv2.destroyAllWindows()
 
 			# 영역이 한개일 경우
 			else:
@@ -405,47 +417,49 @@ for i, img_name in enumerate(test_dataset):
 
 				# 선택한 영역만 자르기
 
-				#선택한 영역 크롭하기
-				rect = cv2.boundingRect(pts)
-				x, y, w, h = rect
-				#print('crop',x,y,w,h)
-				#print('crop_point',y, y+h, x, x+w)
-				# 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
-				if x<0 :
-					x = 0
-				elif y<0 :
-					y = 0
-				croped = face_part_pts_crop[y:y + h, x:x + w].copy()
+				# #선택한 영역 크롭하기
+				# rect = cv2.boundingRect(pts)
+				# x, y, w, h = rect
+				# print('crop',x,y,w,h)
+				# print('crop_point',y, y+h, x, x+w)
+				# # 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
+				# if x<0 :
+				# 	x = 0
+				# elif y<0 :
+				# 	y = 0
+				#croped = face_part_pts_crop[y:y + h, x:x + w].copy()
+
 
 				# 마스크로 영역 지정
-				pts = pts - pts.min(axis=0)
-				mask = np.zeros(croped.shape[:2], np.uint8)
+				# pts = pts - pts.min(axis=0)
+				# print(pts)
+
+				mask = np.zeros(face_part_pts_crop.shape[:2], np.uint8)
 				cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
 				# 검은색 배경으로 자르기
-				black_background = cv2.bitwise_and(croped, croped, mask=mask)
+				black_background = cv2.bitwise_and(face_part_pts_crop, face_part_pts_crop, mask=mask)
 
 				# 흰색 배경으로 자르기
-				bg = np.ones_like(croped, np.uint8) * 255
-				cv2.bitwise_not(bg, bg, mask=mask)
-				white_backgroud = bg + black_background
+			#	bg = np.ones_like(croped, np.uint8) * 255
+			#	cv2.bitwise_not(bg, bg, mask=mask)
+			#	white_backgroud = bg + black_background
 
-
-				output_dir = args["image"] + 'output1/'
+				# 이미지 저장
+				output_dir = args["image"] + 'output/'
 				if not os.path.exists(output_dir):
 					os.mkdir(output_dir)
 				cv2.imwrite(output_dir+'p_' + img_name, face_part_pts_img)
-				cv2.imwrite(output_dir + 'c_' + img_name, croped)
+				cv2.imwrite(output_dir + 'i_' + img_name, face_part_pts_crop)
 				cv2.imwrite(output_dir + 'b_' + img_name, black_background)
 
-				#cv2.imshow('face_part_crop', face_part_pts_img)
-				#cv2.imshow("crop", croped)
-				#cv2.imshow("mask", mask)
-				#cv2.imshow("black_background", black_background)
-				#cv2.imshow("white_backgroud", white_backgroud)
-				#cv2.waitKey(0)
-				#cv2.destroyAllWindows()
-				#args["image"] + img_name
+				# cv2.imshow('face_part_crop', face_part_pts_img)
+				# cv2.imshow("crop", croped)
+				# cv2.imshow("mask", mask)
+				# cv2.imshow("black_background", black_background)
+				# cv2.imshow("white_backgroud", white_backgroud)
+				# cv2.waitKey(0)
+
 
 
 
