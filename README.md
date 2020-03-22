@@ -20,6 +20,6 @@ ex. python face_parts_detection.py -i "images/" -pts "69,17,36,37,38,39,21,71,70
 python face_parts_detection.py -i "이미지 경로(상위폴더까지만)" -part "포인트번호,포인트번호/포인트번호,포인트번호"  
 ex. python face_parts_detection.py -i "images/" -pts "69,17,36,37,38,39,21,71,70/75,29,76,33"  
 
-+ 필터이미지를 영역분할 하고 싶을 때 ** 필터이미지와 원본이미지의 이름이 같아야함 **
-ex. python face_parts_detection.py -i 이미지 경로 -f 필터 이미지 경로 -pts 포인트번호
+필터이미지를 영역분할 하고 싶을 때 ** 필터이미지와 원본이미지의 이름이 같아야함 **  
+python face_parts_detection.py -i 이미지 경로 -f 필터 이미지 경로 -pts 포인트번호  
 ex. python face_parts_detection.py -i D:/facebook/detector/blur/face_part_test/original/ -f D:/facebook/detector/blur/face_part_test/filter/ -pts 98,70,37,41,77,2,99/100,73,44,46,78,14,101
