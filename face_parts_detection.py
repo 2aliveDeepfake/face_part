@@ -15,9 +15,12 @@ import os
 # construct the argument parser and parse the arguments
 ap = argparse.ArgumentParser()
 
-# 이미지 경로
+# 원본 이미지 경로
 ap.add_argument("-i", "--image", required=True,
 	help="path to input image")
+ap.add_argument("-f", "--filter_image", required=True,
+	help="path to input image")
+
 # 얼굴 영역 전체 분할
 ap.add_argument("-a", "--face_part_all")
 # 원하는 얼굴 영역 입력(여러 영역일 경우 ,로 구분)
@@ -33,23 +36,32 @@ detector = dlib.get_frontal_face_detector()
 predictor = dlib.shape_predictor('shape_predictor_68_face_landmarks.dat')
 fa = FaceAligner(predictor, desiredFaceWidth=256)
 
-test_dataset = os.listdir(args["image"])
-num_images = len(test_dataset)
-
-for i, img_name in enumerate(test_dataset):
-
-	# load the input image, resize it, and convert it to grayscale
-	image = cv2.imread(args["image"]+img_name)
-	#image = imutils.resize(image, width=800)
-
-	h, w, c = image.shape
-
-	gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+original_dataset = os.listdir(args["image"])
+filter_dataset = os.listdir(args["filter_image"])
+num_images = len(original_dataset)
 
 
-	# show the original input image and detect faces in the grayscale image
-	# cv2.imshow("Input", image)
-	rects = detector(gray, 2)
+
+for i, img_name in enumerate(original_dataset):
+	# 이미지 외 파일이나 폴더가 있는 경우 제외하기
+	if img_name.endswith(".jpg") :
+
+		# load the input image, resize it, and convert it to grayscale
+		image = cv2.imread(args["image"]+img_name)
+		filter_image = cv2.imread(args["filter_image"] + img_name)
+		#image = imutils.resize(image, width=800)
+
+		h, w, c = image.shape
+
+		gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+
+		# show the original input image and detect faces in the grayscale image
+		# cv2.imshow("Input", image)
+		rects = detector(gray, 2)
+
+	else :
+		continue
 
 	# loop over the face detections
 	for (i, rect) in enumerate(rects):
@@ -323,7 +335,8 @@ for i, img_name in enumerate(test_dataset):
 		# 지정한 포인트대로 자르기
 		if args['face_part_point']:
 
-			face_part_pts_img = image.copy()
+			face_part_pts = image.copy()
+			face_part_pts_filter = filter_image.copy()
 			# 영역별로 x,y좌표를 저장하는 배열
 			face_part_list = []
 
@@ -349,10 +362,12 @@ for i, img_name in enumerate(test_dataset):
 
 					face_part_list.append(pts)
 				#	print('face_part_list', face_part_list)
+					polylines_img = face_part_pts.copy()
+					polylines_filter_img = face_part_pts_filter.copy()
 
 					# 선택한 영역만 표시
-					cv2.polylines(face_part_pts_img, [pts], True, (0, 255, 0), thickness=1)
-
+					cv2.polylines(polylines_img, [pts], True, (0, 255, 0), thickness=1)
+					cv2.polylines(polylines_filter_img, [pts], True, (0, 255, 0), thickness=1)
 					# 선택한 영역만 자르기
 
 					# 선택한 영역 크롭하기
@@ -367,37 +382,56 @@ for i, img_name in enumerate(test_dataset):
 
 					# 마스크로 영역 지정
 				#	pts = pts - pts.min(axis=0)
-					mask = np.zeros(face_part_pts_img.shape[:2], np.uint8)
+					mask = np.zeros(face_part_pts.shape[:2], np.uint8)
 					cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
+					filter_mask = np.zeros(face_part_pts_filter.shape[:2], np.uint8)
+					cv2.drawContours(filter_mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
+
 					# 검은색 배경으로 자르기
-					black_background = cv2.bitwise_and(face_part_pts_img, face_part_pts_img, mask=mask)
+					black_background = cv2.bitwise_and(face_part_pts, face_part_pts, mask=mask)
+					black_background_filter = cv2.bitwise_and(face_part_pts_filter, face_part_pts_filter,
+															  mask=filter_mask)
 
 					# 흰색 배경으로 자르기
-					bg = np.ones_like(face_part_pts_img, np.uint8) * 255
+					bg = np.ones_like(face_part_pts, np.uint8) * 255
 					cv2.bitwise_not(bg, bg, mask=mask)
 					white_backgroud = bg + black_background
 
+					bg_filter = np.ones_like(face_part_pts_filter, np.uint8) * 255
+					cv2.bitwise_not(bg_filter, bg_filter, mask=filter_mask)
+					white_backgroud_filter = bg_filter + black_background_filter
+
 					#이미지 저장
-					output_dir = args["image"] + 'output/'
+					output_dir = args["image"] + 'original_output/'
 					if not os.path.exists(output_dir):
 						os.mkdir(output_dir)
-					cv2.imwrite(output_dir + 'p_' + img_name, face_part_pts_img)
-					cv2.imwrite(output_dir + 'i_' + img_name, face_part_pts_crop)
-					cv2.imwrite(output_dir + 'b_' + img_name, black_background)
+					cv2.imwrite(output_dir + 'o_' + img_name, polylines_img)
+					cv2.imwrite(output_dir + 'ob_' + img_name, black_background)
+					cv2.imwrite(output_dir + 'ow_' + img_name, white_backgroud)
 
+					filter_output_dir = args["image"] + 'filter_output/'
+					if not os.path.exists(filter_output_dir):
+						os.mkdir(filter_output_dir)
+					cv2.imwrite(filter_output_dir + 'f_' + img_name, polylines_filter_img)
+					cv2.imwrite(filter_output_dir + 'fb_' + img_name, black_background_filter)
+					cv2.imwrite(filter_output_dir + 'fw_' + img_name, white_backgroud_filter)
 
-					# cv2.imshow('face_part_crop', face_part_pts_img)
-					# cv2.imshow("crop", croped)
-					# cv2.imshow("mask", mask)
+					# cv2.imshow('original', polylines_img)
+					# # cv2.imshow("crop", croped)
+					# # cv2.imshow("mask", mask)
 					# cv2.imshow("black_background", black_background)
 					# cv2.imshow("white_backgroud", white_backgroud)
+					#
+					# cv2.imshow("filter", polylines_filter_img)
+					# cv2.imshow("f_black_background", black_background_filter)
+					# cv2.imshow("f_white_backgroud", white_backgroud_filter)
 					# cv2.waitKey(0)
-				    # cv2.destroyAllWindows()
 
 			# 영역이 한개일 경우
 			else:
-				face_part_pts_crop = image.copy()
+				face_part_pts = image.copy()
+				face_part_pts_filter = filter_image.copy()
 				face_part_point = args['face_part_point'].split(',')
 				face_part_point_num = len(face_part_point)
 				pts = np.zeros((len(face_part_point), 2), np.int32)
@@ -410,18 +444,17 @@ for i, img_name in enumerate(test_dataset):
 					else:
 						pts[_] = [additional_point[int(pts_name)][0], additional_point[int(pts_name)][1]]
 
-				# print('pts', pts)
+				polylines_img = face_part_pts.copy()
+				polylines_filter_img = face_part_pts_filter.copy()
 
 				# 선택한 영역만 표시
-				cv2.polylines(face_part_pts_img, [pts], True, (0, 255, 0), thickness=1)
-
+				cv2.polylines(polylines_img, [pts], True, (0, 255, 0), thickness=1)
+				cv2.polylines(polylines_filter_img, [pts], True, (0, 255, 0), thickness=1)
 				# 선택한 영역만 자르기
 
 				# #선택한 영역 크롭하기
 				# rect = cv2.boundingRect(pts)
 				# x, y, w, h = rect
-				# print('crop',x,y,w,h)
-				# print('crop_point',y, y+h, x, x+w)
 				# # 선택된 영역이 이미지 넓이를 벗어난 경우 예외처리
 				# if x<0 :
 				# 	x = 0
@@ -432,32 +465,49 @@ for i, img_name in enumerate(test_dataset):
 
 				# 마스크로 영역 지정
 				# pts = pts - pts.min(axis=0)
-				# print(pts)
-
-				mask = np.zeros(face_part_pts_crop.shape[:2], np.uint8)
+				mask = np.zeros(face_part_pts.shape[:2], np.uint8)
 				cv2.drawContours(mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
 
+				filter_mask = np.zeros(face_part_pts_filter.shape[:2], np.uint8)
+				cv2.drawContours(filter_mask, [pts], -1, (255, 255, 255), -1, cv2.LINE_AA)
+
 				# 검은색 배경으로 자르기
-				black_background = cv2.bitwise_and(face_part_pts_crop, face_part_pts_crop, mask=mask)
+				black_background = cv2.bitwise_and(face_part_pts, face_part_pts, mask=mask)
+				black_background_filter = cv2.bitwise_and(face_part_pts_filter, face_part_pts_filter, mask=filter_mask)
 
 				# 흰색 배경으로 자르기
-			#	bg = np.ones_like(croped, np.uint8) * 255
-			#	cv2.bitwise_not(bg, bg, mask=mask)
-			#	white_backgroud = bg + black_background
+				bg = np.ones_like(face_part_pts, np.uint8) * 255
+				cv2.bitwise_not(bg, bg, mask=mask)
+				white_backgroud = bg + black_background
+
+				bg_filter = np.ones_like(face_part_pts_filter, np.uint8) * 255
+				cv2.bitwise_not(bg_filter, bg_filter, mask=filter_mask)
+				white_backgroud_filter = bg_filter + black_background_filter
 
 				# 이미지 저장
-				output_dir = args["image"] + 'output/'
+				output_dir = args["image"] + 'original_output/'
 				if not os.path.exists(output_dir):
 					os.mkdir(output_dir)
-				cv2.imwrite(output_dir+'p_' + img_name, face_part_pts_img)
-				cv2.imwrite(output_dir + 'i_' + img_name, face_part_pts_crop)
-				cv2.imwrite(output_dir + 'b_' + img_name, black_background)
+				cv2.imwrite(output_dir+'o_' + img_name, polylines_img)
+				cv2.imwrite(output_dir + 'ob_' + img_name, black_background)
+				cv2.imwrite(output_dir + 'ow_' + img_name, white_backgroud)
 
-				# cv2.imshow('face_part_crop', face_part_pts_img)
-				# cv2.imshow("crop", croped)
-				# cv2.imshow("mask", mask)
+				filter_output_dir = args["image"] + 'filter_output/'
+				if not os.path.exists(filter_output_dir):
+					os.mkdir(filter_output_dir)
+				cv2.imwrite(filter_output_dir + 'f_' + img_name, polylines_filter_img)
+				cv2.imwrite(filter_output_dir + 'fb_' + img_name, black_background_filter)
+				cv2.imwrite(filter_output_dir + 'fw_' + img_name, white_backgroud_filter)
+
+				# cv2.imshow('original', polylines_img)
+				# #cv2.imshow("crop", croped)
+				# # cv2.imshow("mask", mask)
 				# cv2.imshow("black_background", black_background)
 				# cv2.imshow("white_backgroud", white_backgroud)
+				#
+				# cv2.imshow("filter", polylines_filter_img)
+				# cv2.imshow("f_black_background", black_background_filter)
+				# cv2.imshow("f_white_backgroud", white_backgroud_filter)
 				# cv2.waitKey(0)
 
 
