@@ -1,3 +1,5 @@
+
+# import the necessary packages
 from imutils import face_utils
 import numpy as np
 import argparse
@@ -46,7 +48,6 @@ for i, img_name in enumerate(original_dataset):
 
 		# load the input image, resize it, and convert it to grayscale
 		image = cv2.imread(args["image"]+img_name)
-		print(img_name)
 		filter_image = cv2.imread(args["filter_image"] + img_name)
 		#image = imutils.resize(image, width=800)
 
@@ -103,35 +104,33 @@ for i, img_name in enumerate(original_dataset):
 		# y = (y2 - y1) / (x2 - x1) * (x - x1) + y1
 
 		# 나누는 값이 0인지를 check하는 코드
-		tmp_check = (shape[17][0]-shape[19][0])
+		tmp_check = (shape[17][0] - shape[19][0])
 		if tmp_check == 0:
 			tmp_check = 1
 
-
-		part1_m = (shape[17][1]-shape[19][1])/tmp_check
-		part1_n = shape[17][1]-(part1_m*shape[17][0])
-		part1_y = part1_m*shape[18][0] + part1_n
-		part1_d = abs(shape[18][1]-part1_y)
-		#print('part1_m',part1_m,'part1_n',part1_n,'part1_y',part1_y,'part1_d',part1_d)
+		part1_m = (shape[17][1] - shape[19][1]) / tmp_check
+		part1_n = shape[17][1] - (part1_m * shape[17][0])
+		part1_y = part1_m * shape[18][0] + part1_n
+		part1_d = abs(shape[18][1] - part1_y)
+		# print('part1_m',part1_m,'part1_n',part1_n,'part1_y',part1_y,'part1_d',part1_d)
 
 		x_69 = shape[17][0]
-		y_69 = int(shape[17][1]-part1_d)
+		y_69 = int(shape[17][1] - part1_d)
 		x_70 = shape[19][0]
-		y_70 = int(shape[19][1]-part1_d)
+		y_70 = int(shape[19][1] - part1_d)
 		x_71 = shape[21][0]
-		y_71 = int(shape[21][1]-part1_d)
+		y_71 = int(shape[21][1] - part1_d)
 
 		# 나누는 값이 0인지를 check하는 코드
 		tmp_check = (shape[17][0] - shape[19][0])
 		if tmp_check == 0:
 			tmp_check = 1
 
-
-		part5_m = (shape[26][1]-shape[24][1])/tmp_check
+		part5_m = (shape[26][1] - shape[24][1]) / tmp_check
 		print(part5_m)
-		part5_n = shape[26][1]-(part5_m*shape[26][0])
-		part5_y = part5_m*shape[25][0] + part5_n
-		part5_d = abs(shape[25][1]-part5_y)
+		part5_n = shape[26][1] - (part5_m * shape[26][0])
+		part5_y = part5_m * shape[25][0] + part5_n
+		part5_d = abs(shape[25][1] - part5_y)
 		#print('part5_m',part5_m,'part5_n',part5_n,'part5_y',part5_y,'part5_d',part5_d)
 
 		x_72 = shape[22][0]
@@ -358,7 +357,7 @@ for i, img_name in enumerate(original_dataset):
 
 				for i,j in enumerate(face_part) :
 					face_part_pts_crop = image.copy()
-				#	print('i', i,'j',j)
+					print('i', i,'j',j)
 					face_part_point = face_part[i].split(',')
 					face_part_point_num = len(face_part_point)
 					pts = np.zeros((len(face_part_point), 2), np.int32)
@@ -412,28 +411,30 @@ for i, img_name in enumerate(original_dataset):
 					bg_filter = np.ones_like(face_part_pts_filter, np.uint8) * 255
 					cv2.bitwise_not(bg_filter, bg_filter, mask=filter_mask)
 					white_backgroud_filter = bg_filter + black_background_filter
-
+					#
 					#이미지 저장
+
 					output_dir = args["image"] + 'original_output/'
 					if not os.path.exists(output_dir):
 						os.mkdir(output_dir)
-					# cv2.imwrite(output_dir + 'o_' + img_name, polylines_img)
-					# cv2.imwrite(output_dir + 'ob_' + img_name, black_background)
-					cv2.imwrite(output_dir + 'ow_' + img_name, white_backgroud)
+
+					cv2.imwrite(output_dir + 'o_' +str(i)+'_'+ img_name, polylines_img)
+					cv2.imwrite(output_dir + 'ob_' +str(i)+'_'+ img_name, black_background)
+					cv2.imwrite(output_dir + 'ow_' +str(i)+'_'+ img_name, white_backgroud)
 
 					filter_output_dir = args["image"] + 'filter_output/'
 					if not os.path.exists(filter_output_dir):
 						os.mkdir(filter_output_dir)
-					# cv2.imwrite(filter_output_dir + 'f_' + img_name, polylines_filter_img)
-					# cv2.imwrite(filter_output_dir + 'fb_' + img_name, black_background_filter)
-					cv2.imwrite(filter_output_dir + 'fw_' + img_name, white_backgroud_filter)
+					cv2.imwrite(filter_output_dir + 'f_' +str(i)+'_'+ img_name, polylines_filter_img)
+					cv2.imwrite(filter_output_dir + 'fb_' +str(i)+'_'+ img_name, black_background_filter)
+					cv2.imwrite(filter_output_dir + 'fw_' +str(i)+'_'+img_name, white_backgroud_filter)
 
 					# cv2.imshow('original', polylines_img)
-					# # cv2.imshow("crop", croped)
-					# # cv2.imshow("mask", mask)
+					# # # cv2.imshow("crop", croped)
+					# # # cv2.imshow("mask", mask)
 					# cv2.imshow("black_background", black_background)
 					# cv2.imshow("white_backgroud", white_backgroud)
-					#
+					# #
 					# cv2.imshow("filter", polylines_filter_img)
 					# cv2.imshow("f_black_background", black_background_filter)
 					# cv2.imshow("f_white_backgroud", white_backgroud_filter)
@@ -499,15 +500,15 @@ for i, img_name in enumerate(original_dataset):
 				output_dir = args["image"] + 'original_output/'
 				if not os.path.exists(output_dir):
 					os.mkdir(output_dir)
-				# cv2.imwrite(output_dir+'o_' + img_name, polylines_img)
-				# cv2.imwrite(output_dir + 'ob_' + img_name, black_background)
+				cv2.imwrite(output_dir+'o_' + img_name, polylines_img)
+				cv2.imwrite(output_dir + 'ob_' + img_name, black_background)
 				cv2.imwrite(output_dir + 'ow_' + img_name, white_backgroud)
 
 				filter_output_dir = args["image"] + 'filter_output/'
 				if not os.path.exists(filter_output_dir):
 					os.mkdir(filter_output_dir)
-				# cv2.imwrite(filter_output_dir + 'f_' + img_name, polylines_filter_img)
-				# cv2.imwrite(filter_output_dir + 'fb_' + img_name, black_background_filter)
+				cv2.imwrite(filter_output_dir + 'f_' + img_name, polylines_filter_img)
+				cv2.imwrite(filter_output_dir + 'fb_' + img_name, black_background_filter)
 				cv2.imwrite(filter_output_dir + 'fw_' + img_name, white_backgroud_filter)
 
 				# cv2.imshow('original', polylines_img)
@@ -520,3 +521,8 @@ for i, img_name in enumerate(original_dataset):
 				# cv2.imshow("f_black_background", black_background_filter)
 				# cv2.imshow("f_white_backgroud", white_backgroud_filter)
 				# cv2.waitKey(0)
+
+
+
+
+
